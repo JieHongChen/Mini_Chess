@@ -1,4 +1,5 @@
 CXX = g++
+# `--std=c++2a` support C++20
 CXXFLAGS = --std=c++2a -Wall -Wextra -O3
 
 SOURCES_DIR = src
@@ -7,17 +8,17 @@ UNITTEST_DIR = unittest
 BUILD_DIR = build
 SOURCES = $(wildcard $(SOURCES_DIR)/*.cpp)
 
-MAIN = $(SOURCES_DIR)/main.cpp
-PLAYERS = $(wildcard $(SOURCES_DIR)/player/*.cpp)
-UNITTESTS = $(wildcard $(UNITTEST_DIR)/*.cpp)
-STATE_SOURCE = $(SOURCES_DIR)/state/state.cpp
-POLICY_DIR = $(SOURCES_DIR)/policy
+MAIN 			= $(SOURCES_DIR)/main.cpp
+PLAYERS 		= $(wildcard $(SOURCES_DIR)/player/*.cpp)
+UNITTESTS 		= $(wildcard $(UNITTEST_DIR)/*.cpp)
+STATE_SOURCE 	= $(SOURCES_DIR)/state/state.cpp
+POLICY_DIR 		= $(SOURCES_DIR)/policy
 
-TARGET_PLAYER = $(PLAYERS:$(SOURCES_DIR)/player/%.cpp=%)
-TARGET_MAIN = main
-TARGET_OTHER = selfplay benchmark
+TARGET_PLAYER 	= $(PLAYERS:$(SOURCES_DIR)/player/%.cpp=%)
+TARGET_MAIN 	= main
+TARGET_OTHER 	= selfplay benchmark
 TARGET_UNITTEST = $(UNITTESTS:$(UNITTEST_DIR)/%.cpp=%)
-OTHER = action state gamelog.txt
+OTHER 			= action state gamelog.txt
 
 
 .PHONY: all clean
@@ -29,23 +30,30 @@ $(BUILD_DIR):
 	mkdir "$(BUILD_DIR)"
 	mkdir "$(UNITTEST_DIR)/build"
 
+# `$@` is the target name
+# `$<` is the first dependency
+# `$^` is all dependencies
+
 # build target
 ifeq ($(OS), Windows_NT)
 $(TARGET_PLAYER): % : $(SOURCES_DIR)/player/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/player_$@.exe $(STATE_SOURCE) $(POLICY_DIR)/$@.cpp $< 
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/player_$@.exe 	$(STATE_SOURCE) $(POLICY_DIR)/$@.cpp $< 
 $(TARGET_MAIN): % : $(SOURCES_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@.exe $< 
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@.exe 			$< 
 $(TARGET_OTHER): %: $(SOURCES_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@.exe $(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@.exe 			$(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
 $(TARGET_UNITTEST): %: $(UNITTEST_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(UNITTEST_DIR)/build/$@.exe $(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
+	$(CXX) $(CXXFLAGS) -o $(UNITTEST_DIR)/build/$@.exe 	$(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
 else
 $(TARGET_PLAYER): % : $(SOURCES_DIR)/player/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/player_$@ $(STATE_SOURCE) $(POLICY_DIR)/$@.cpp $< 
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/player_$@ 		$(STATE_SOURCE) $(POLICY_DIR)/$@.cpp $< 
 $(TARGET_MAIN): % : $(SOURCES_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@ $< 
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@ 				$< 
 $(TARGET_OTHER): %: $(SOURCES_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@ $(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@ 				$(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
 $(TARGET_UNITTEST): %: $(UNITTEST_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -o $(UNITTEST_DIR)/build/$@ $(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
+	$(CXX) $(CXXFLAGS) -o $(UNITTEST_DIR)/build/$@ 		$(STATE_SOURCE) $(POLICY_DIR)/*.cpp $<
 endif
+
+clean:
+	rm -rf $(BUILD_DIR) $(UNITTEST_DIR)/build
