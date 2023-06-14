@@ -38,7 +38,7 @@ public:
                                        }};
 };
 
-enum GameState {
+enum class GameState {
     UNKNOWN = 0,
     WIN,
     DRAW,
@@ -48,7 +48,7 @@ enum GameState {
 class State {
 public:
     // You may want to add more property for a state
-    GameState game_state = UNKNOWN;
+    GameState game_state = GameState::UNKNOWN;
     Board board;
     int player = 0;
     std::vector<Move> legal_actions;
@@ -79,6 +79,7 @@ State* State::next_state(Move move) {
     if (moved == 1 && (to.first == BOARD_H - 1 || to.first == 0)) {
         moved = 5;
     }
+    // catch the piece
     if (next.board[1 - this->player][to.first][to.second]) {
         next.board[1 - this->player][to.first][to.second] = 0;
     }
@@ -88,7 +89,7 @@ State* State::next_state(Move move) {
 
     State* next_state = new State(next, 1 - this->player);
 
-    if (this->game_state != WIN)
+    if (this->game_state != GameState::WIN)
         next_state->get_legal_actions();
     return next_state;
 }
@@ -132,7 +133,7 @@ void State::get_legal_actions() {
     // [Optional]
     // This method is not very efficient
     // You can redesign it
-    this->game_state = NONE;
+    this->game_state = GameState::NONE;
     std::vector<Move> all_actions;
     auto self_board = this->board.board[this->player];
     auto oppn_board = this->board.board[1 - this->player];
@@ -151,7 +152,7 @@ void State::get_legal_actions() {
                             if (j < BOARD_W - 1 && (oppn_piece = oppn_board[i + 1][j + 1]) > 0) {
                                 all_actions.push_back(Move(Point(i, j), Point(i + 1, j + 1)));
                                 if (oppn_piece == 6) {
-                                    this->game_state = WIN;
+                                    this->game_state = GameState::WIN;
                                     this->legal_actions = all_actions;
                                     return;
                                 }
@@ -159,7 +160,7 @@ void State::get_legal_actions() {
                             if (j > 0 && (oppn_piece = oppn_board[i + 1][j - 1]) > 0) {
                                 all_actions.push_back(Move(Point(i, j), Point(i + 1, j - 1)));
                                 if (oppn_piece == 6) {
-                                    this->game_state = WIN;
+                                    this->game_state = GameState::WIN;
                                     this->legal_actions = all_actions;
                                     return;
                                 }
@@ -171,7 +172,7 @@ void State::get_legal_actions() {
                             if (j < BOARD_W - 1 && (oppn_piece = oppn_board[i - 1][j + 1]) > 0) {
                                 all_actions.push_back(Move(Point(i, j), Point(i - 1, j + 1)));
                                 if (oppn_piece == 6) {
-                                    this->game_state = WIN;
+                                    this->game_state = GameState::WIN;
                                     this->legal_actions = all_actions;
                                     return;
                                 }
@@ -179,7 +180,7 @@ void State::get_legal_actions() {
                             if (j > 0 && (oppn_piece = oppn_board[i - 1][j - 1]) > 0) {
                                 all_actions.push_back(Move(Point(i, j), Point(i - 1, j - 1)));
                                 if (oppn_piece == 6) {
-                                    this->game_state = WIN;
+                                    this->game_state = GameState::WIN;
                                     this->legal_actions = all_actions;
                                     return;
                                 }
@@ -222,7 +223,7 @@ void State::get_legal_actions() {
                                 oppn_piece = oppn_board[p[0]][p[1]];
                                 if (oppn_piece) {
                                     if (oppn_piece == 6) {
-                                        this->game_state = WIN;
+                                        this->game_state = GameState::WIN;
                                         this->legal_actions = all_actions;
                                         return;
                                     } else
@@ -244,7 +245,7 @@ void State::get_legal_actions() {
 
                             oppn_piece = oppn_board[x][y];
                             if (oppn_piece == 6) {
-                                this->game_state = WIN;
+                                this->game_state = GameState::WIN;
                                 this->legal_actions = all_actions;
                                 return;
                             }
@@ -263,7 +264,7 @@ void State::get_legal_actions() {
 
                             oppn_piece = oppn_board[p[0]][p[1]];
                             if (oppn_piece == 6) {
-                                this->game_state = WIN;
+                                this->game_state = GameState::WIN;
                                 this->legal_actions = all_actions;
                                 return;
                             }
@@ -422,10 +423,10 @@ int main(int argc, char** argv) {
 
     State game;
     game.get_legal_actions();
-    State* temp;
+    State* temp = nullptr;
     std::string data;
     int step = 1;
-    while (game.game_state == UNKNOWN || game.game_state == NONE) {
+    while (game.game_state == GameState::UNKNOWN || game.game_state == GameState::NONE) {
         // std::cout << "test\n";
         // Output current state
         std::cout << step << " step" << std::endl;
@@ -444,11 +445,11 @@ int main(int argc, char** argv) {
         std::ifstream fin(file_action);
         Move action(Point(-1, -1), Point(-1, -1));
         int total = 0;
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-        system("cls");
-#else
-        system("clear");
-#endif
+        // #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+        //         system("cls");
+        // #else
+        //         system("clear");
+        // #endif
         while (true) {
             int x, y, n, m;
             if (!(fin >> x)) break;
@@ -470,15 +471,22 @@ int main(int argc, char** argv) {
             // If action is invalid.
             data = game.encode_output();
             std::cout << "Invalid Action\n";
+            std::cout << "depth: " << total << "\n";
+            std::cout << action.first.second << " " << action.first.first << " → "
+                      << action.second.second << " " << action.second.first << "\n";
             std::cout << x_axis[action.first.second] << y_axis[action.first.first] << " → "
                       << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
             std::cout << data;
             log << "Invalid Action\n";
+            log << "depth: " << total << "\n";
+            log << action.first.second << " " << action.first.first << " → "
+                << action.second.second << " " << action.second.first << "\n";
             log << x_axis[action.first.second] << y_axis[action.first.first] << " → "
                 << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
             log << data;
             break;
         } else {
+            delete temp;
             temp = game.next_state(action);
             std::cout << "Depth: " << total << std::endl;
             std::cout << x_axis[action.first.second] << y_axis[action.first.first] << " → "
@@ -506,13 +514,13 @@ int main(int argc, char** argv) {
                 }
             }
             if (white_material > black_material) {
-                game.player = 1;
-                game.game_state = WIN;
-            } else if (white_material < black_material) {
                 game.player = 0;
-                game.game_state = WIN;
+                game.game_state = GameState::WIN;
+            } else if (white_material < black_material) {
+                game.player = 1;
+                game.game_state = GameState::WIN;
             } else {
-                game.game_state = DRAW;
+                game.game_state = GameState::DRAW;
             }
         }
     }
@@ -520,7 +528,7 @@ int main(int argc, char** argv) {
     data = game.encode_output();
     std::cout << data << std::endl;
     log << data << std::endl;
-    if (game.game_state == WIN) {
+    if (game.game_state == GameState::WIN) {
         std::cout << "Player" << game.player + 1 << " wins\n";
         log << "Player" << game.player + 1 << " wins\n";
     } else {

@@ -56,4 +56,5 @@ $(TARGET_UNITTEST): %: $(UNITTEST_DIR)/%.cpp
 endif
 
 clean:
-	rm -rf $(BUILD_DIR) $(UNITTEST_DIR)/build
+	rm -rf $(BUILD_DIR) $(UNITTEST_DIR)/build \
+	rm -f $(OTHER)
