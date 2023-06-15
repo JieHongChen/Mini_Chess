@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <sstream>
 
 #include "../config.hpp"
@@ -27,7 +28,7 @@ static const int piece_value[7] = {0, 2, 6, 7, 8, 20, 100};
  * 
  * @return int 
  */
-int State::evaluate() {
+int State::evaluate() const {
     long long value = 0;
 
     for (int i = 0; i < BOARD_H; ++i) {
@@ -46,12 +47,32 @@ int State::evaluate() {
 #endif
 
 /**
- * @brief return next state after the move
+ * @brief return 1 if white win, -1 if black win, 0 if not end
  *
- * @param move
- * @return State*
+ * @return int
  */
-State* State::next_state(Move move) {
+int State::win() const {
+    int white = 0, black = 0;
+    for (int i = 0; i < BOARD_H; ++i) {
+        for (int j = 0; j < BOARD_W; ++j) {
+            if (board.board[0][i][j] == 6) {
+                white = 1;
+            } else if (board.board[1][i][j] == 6) {
+                black = 1;
+            }
+        }
+    }
+
+    return white - black;
+}
+
+/**
+ * @brief return next state after move
+ * 
+ * @param move 
+ * @return std::unique_ptr<State> 
+ */
+std::unique_ptr<State> State::next_state(Move move) {
     Board next = this->board;
     Point from = move.first, to = move.second;
 
@@ -67,7 +88,7 @@ State* State::next_state(Move move) {
     next.board[this->player][from.first][from.second] = 0;
     next.board[this->player][to.first][to.second] = moved;
 
-    State* next_state = new State(next, 1 - this->player);
+    std::unique_ptr<State> next_state = std::make_unique<State>(next, 1 - this->player);
 
     if (this->game_state != WIN)
         next_state->get_legal_actions();

@@ -6,7 +6,7 @@
 #include "../config.hpp"
 #include "../state/state.hpp"
 
-State* root;
+std::unique_ptr<State> root;
 
 /**
  * @brief Read the board from the file
@@ -29,7 +29,7 @@ void read_board(std::ifstream& fin) {
             // std::cout << std::endl;
         }
     }
-    root = new State(board, player);
+    root = std::make_unique<State>(board, player);
     root->get_legal_actions();
 }
 
@@ -38,17 +38,18 @@ void read_board(std::ifstream& fin) {
  *
  * @param fout
  */
+static const std::vector<int> depths = {3, 5, 6, 7, 8, 9, 10};
 void write_valid_spot(std::ofstream& fout) {
     // Keep updating the output until getting killed.
-    while (true) {
+    Move move;
+    for (const int& depth : depths) {
         // Choose a minimax spot.
-        Move move = Minimax::get_move(root, 5);
+        move = Minimax::get_move(root, depth);
         fout << move.first.first << " " << move.first.second << " "
              << move.second.first << " " << move.second.second << std::endl;
 
         // Remember to flush the output to ensure the last action is written to file.
         fout.flush();
-        break;
     }
 }
 

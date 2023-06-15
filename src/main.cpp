@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -58,7 +59,7 @@ public:
     State(Board board) : board(board){};
     State(Board board, int player) : board(board), player(player){};
 
-    State* next_state(Move move);
+    std::unique_ptr<State> next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
     std::string encode_state();
@@ -70,7 +71,7 @@ public:
  * @param move
  * @return State*
  */
-State* State::next_state(Move move) {
+std::unique_ptr<State> State::next_state(Move move) {
     Board next = this->board;
     Point from = move.first, to = move.second;
 
@@ -87,7 +88,7 @@ State* State::next_state(Move move) {
     next.board[this->player][from.first][from.second] = 0;
     next.board[this->player][to.first][to.second] = moved;
 
-    State* next_state = new State(next, 1 - this->player);
+    std::unique_ptr<State> next_state = std::make_unique<State>(next, 1 - this->player);
 
     if (this->game_state != GameState::WIN)
         next_state->get_legal_actions();
@@ -423,7 +424,8 @@ int main(int argc, char** argv) {
 
     State game;
     game.get_legal_actions();
-    State* temp = nullptr;
+    std::unique_ptr<State> pTemp;
+    // State* temp = nullptr;
     std::string data;
     int step = 1;
     while (game.game_state == GameState::UNKNOWN || game.game_state == GameState::NONE) {
@@ -445,11 +447,11 @@ int main(int argc, char** argv) {
         std::ifstream fin(file_action);
         Move action(Point(-1, -1), Point(-1, -1));
         int total = 0;
-        // #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-        //         system("cls");
-        // #else
-        //         system("clear");
-        // #endif
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+        system("cls");
+#else
+        system("clear");
+#endif
         while (true) {
             int x, y, n, m;
             if (!(fin >> x)) break;
@@ -471,23 +473,27 @@ int main(int argc, char** argv) {
             // If action is invalid.
             data = game.encode_output();
             std::cout << "Invalid Action\n";
-            std::cout << "depth: " << total << "\n";
-            std::cout << action.first.second << " " << action.first.first << " → "
-                      << action.second.second << " " << action.second.first << "\n";
-            std::cout << x_axis[action.first.second] << y_axis[action.first.first] << " → "
-                      << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
+            // std::cout << "depth: " << total << "\n";
+            // std::cout << action.first.second << " " << action.first.first << " → "
+            //           << action.second.second << " " << action.second.first << "\n";
+            // std::cout << x_axis[action.first.second] << y_axis[action.first.first] << " → "
+            //           << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
             std::cout << data;
             log << "Invalid Action\n";
-            log << "depth: " << total << "\n";
-            log << action.first.second << " " << action.first.first << " → "
-                << action.second.second << " " << action.second.first << "\n";
+            // log << "depth: " << total << "\n";
+            // log << action.first.second << " " << action.first.first << " → "
+            //     << action.second.second << " " << action.second.first << "\n";
             log << x_axis[action.first.second] << y_axis[action.first.first] << " → "
                 << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
             log << data;
+
+            game.player = !game.player;
+            game.game_state = GameState::WIN;
             break;
         } else {
-            delete temp;
-            temp = game.next_state(action);
+            // delete temp;
+            // temp = game.next_state(action);
+            pTemp = game.next_state(action);
             std::cout << "Depth: " << total << std::endl;
             std::cout << x_axis[action.first.second] << y_axis[action.first.first] << " → "
                       << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
@@ -495,7 +501,7 @@ int main(int argc, char** argv) {
             log << x_axis[action.first.second] << y_axis[action.first.first] << " → "
                 << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
         }
-        game = *temp;
+        game = *pTemp;
 
         step += 1;
         if (step > MAX_STEP) {

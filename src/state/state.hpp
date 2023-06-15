@@ -2,6 +2,7 @@
 #define __STATE_H__
 
 #include <cstdlib>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -52,8 +53,9 @@ public:
     State(Board board) : board(board){};
     State(Board board, int player) : board(board), player(player){};
 
-    int evaluate();
-    State* next_state(Move move);
+    int evaluate() const;
+    int win() const;
+    std::unique_ptr<State> next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
     std::string encode_state();

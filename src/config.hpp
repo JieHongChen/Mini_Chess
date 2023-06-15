@@ -19,6 +19,6 @@
 // };
 #define PIECE_STR_LEN 2
 const char PIECE_TABLE[2][7][5] = {
-    {"  ", "wP", "wR", "wn", "wB", "wQ", "wK"},
-    {"  ", "bP", "bR", "bn", "bB", "bQ", "bK"},
+    {"  ", "wP", "wR", "wN", "wB", "wQ", "wK"},
+    {"  ", "bP", "bR", "bN", "bB", "bQ", "bK"},
 };

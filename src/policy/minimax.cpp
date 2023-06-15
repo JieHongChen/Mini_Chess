@@ -13,28 +13,39 @@
  * @param depth Search depth
  * @return Move
  */
-Move Minimax::get_move(State *state, int depth) {
+Move Minimax::get_move(std::unique_ptr<State>& state, int depth) {
     Move best_move = {{0, 0}, {0, 0}};
     minimax(state, depth, (state->player ? -1 : 1), true, best_move);
     return best_move;
 }
 
-long long Minimax::minimax(State *state, int depth, int player, bool is_max, Move& best_move) {
+/**
+ * @brief store the best move search by Minimax in best_move
+ * 
+ * @param state 
+ * @param depth 
+ * @param player 
+ * @param is_max 
+ * @param best_move 
+ * @return long long 
+ */
+long long Minimax::minimax(std::unique_ptr<State>& state, int depth, int player, bool is_max, Move& best_move) {
     if (depth == 0) {
         return player * state->evaluate();
     }
     state->get_legal_actions();
-    // if (state->legal_actions.empty()) {
-    //     std::cout << "No legal actions" << std::endl;
-    //     return (is_max ? INF : -INF);
-    // }
     Move m;
     if (is_max) {
         long long value = -INF;
         for (auto action : state->legal_actions) {
-            State *next_state = state->next_state(action);
+            std::unique_ptr<State> next_state = state->next_state(action);
+            if (next_state->win() == player) {
+                best_move = action;
+                return INF;
+            } else if (next_state->win() == -player) {
+                continue;
+            }
             long long child_value = minimax(next_state, depth - 1, player, !is_max, m);
-            delete next_state;
             if (child_value > value) {
                 value = child_value;
                 best_move = action;
@@ -44,9 +55,14 @@ long long Minimax::minimax(State *state, int depth, int player, bool is_max, Mov
     } else {
         long long value = INF;
         for (auto action : state->legal_actions) {
-            State *next_state = state->next_state(action);
+            std::unique_ptr<State> next_state = state->next_state(action);
+            if (next_state->win() == -player) {
+                best_move = action;
+                return -INF;
+            } else if (next_state->win() == player) {
+                continue;
+            }
             long long child_value = minimax(next_state, depth - 1, player, !is_max, m);
-            delete next_state;
             if (child_value < value) {
                 value = child_value;
                 best_move = action;
