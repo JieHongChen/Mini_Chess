@@ -1,4 +1,4 @@
-#include "../policy/alphabeta.hpp"
+#include "../policy/negamax.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -34,17 +34,17 @@ void read_board(std::ifstream& fin) {
 }
 
 /**
- * @brief choose a spot by Alpha-Beta pruning and write to file
+ * @brief choose a spot by Negamax and write to file
  *
  * @param fout
  */
-static const std::vector<int> depths = {6, 8, 9, 10, 12};
+static const std::vector<int> depths = {3, 5, 6, 7, 8, 9, 10};
 void write_valid_spot(std::ofstream& fout) {
     // Keep updating the output until getting killed.
     Move move;
     for (const int& depth : depths) {
-        // Choose a alphabeta spot.
-        move = AlphaBeta::get_move(root, depth);
+        // Choose a spot by Negamax.
+        move = Negamax::get_move(root, depth);
         fout << move.first.first << " " << move.first.second << " "
              << move.second.first << " " << move.second.second << std::endl;
 

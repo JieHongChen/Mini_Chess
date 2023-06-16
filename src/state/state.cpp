@@ -44,6 +44,32 @@ int State::evaluate() const {
     //     value = std::numeric_limits<int>::min();
     return value;
 }
+#elif STATE_FUNCTION == 3
+// #include <algorithm>
+// #include <limits>
+static const int piece_value[7] = {0, 2, 6, 7, 8, 20, 100};
+/**
+ * @brief return total white value subtract total black value
+ * 
+ * @return int 
+ */
+int State::evaluate() const {
+    long long value = 0;
+
+    for (int i = 0; i < BOARD_H; ++i) {
+        for (int j = 0; j < BOARD_W; ++j) {
+            value += piece_value[static_cast<int>(board.board[0][i][j])]; // white
+            value -= piece_value[static_cast<int>(board.board[1][i][j])]; // black
+        }
+    }
+
+    // if (value > std::numeric_limits<int>::max())
+    //     value = std::numeric_limits<int>::max();
+    // else if (value < std::numeric_limits<int>::min())
+    //     value = std::numeric_limits<int>::min();
+    return value;
+}
+
 #endif
 
 /**
