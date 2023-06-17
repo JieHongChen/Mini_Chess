@@ -38,7 +38,7 @@ void read_board(std::ifstream& fin) {
  *
  * @param fout
  */
-static const std::vector<int> depths = {6, 8, 9, 10, 12};
+static const std::vector<int> depths = {6, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
 void write_valid_spot(std::ofstream& fout) {
     // Keep updating the output until getting killed.
     Move move;

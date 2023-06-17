@@ -9,11 +9,9 @@
 #include <vector>
 
 #include "config.hpp"
-
 /*Board Size, Don't change!*/
 #define BOARD_H 6
 #define BOARD_W 5
-
 /*State*/
 typedef std::pair<size_t, size_t> Point;
 typedef std::pair<Point, Point> Move;
@@ -45,7 +43,6 @@ enum class GameState {
     DRAW,
     NONE
 };
-
 class State {
 public:
     // You may want to add more property for a state
@@ -64,7 +61,6 @@ public:
     std::string encode_output();
     std::string encode_state();
 };
-
 /**
  * @brief return next state after the move
  *
@@ -80,7 +76,6 @@ std::unique_ptr<State> State::next_state(Move move) {
     if (moved == 1 && (to.first == BOARD_H - 1 || to.first == 0)) {
         moved = 5;
     }
-    // catch the piece
     if (next.board[1 - this->player][to.first][to.second]) {
         next.board[1 - this->player][to.first][to.second] = 0;
     }
@@ -94,7 +89,6 @@ std::unique_ptr<State> State::next_state(Move move) {
         next_state->get_legal_actions();
     return next_state;
 }
-
 static const int move_table_rook_bishop[8][7][2] = {
     {{0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}},
     {{0, -1}, {0, -2}, {0, -3}, {0, -4}, {0, -5}, {0, -6}, {0, -7}},
@@ -125,7 +119,6 @@ static const int move_table_king[8][2] = {
     {-1, 1},
     {-1, -1},
 };
-
 /**
  * @brief get all legal actions of now state
  *
@@ -278,10 +271,8 @@ void State::get_legal_actions() {
     std::cout << "\n";
     this->legal_actions = all_actions;
 }
-
 static std::string y_axis = "654321";
 static std::string x_axis = "ABCDE";
-
 void make_seperate_line(std::stringstream& ss) {
     ss << "├";
     for (int w = 0; w < BOARD_W; w += 1) {
@@ -345,7 +336,6 @@ std::string State::encode_output() {
     ss << "─┴───┘\n";
     return ss.str();
 }
-
 /**
  * @brief encode the state to the format for player
  *
@@ -367,12 +357,10 @@ std::string State::encode_state() {
     }
     return ss.str();
 }
-
 /*game runner part!*/
 const std::string file_log = "gamelog.txt";
 const std::string file_state = "state";
 const std::string file_action = "action";
-
 void launch_executable(std::string filename) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     // filename may has path in it.
@@ -394,7 +382,6 @@ void launch_executable(std::string filename) {
     system(command.c_str());
 #endif
 }
-
 bool valid_move(Move move, std::vector<Move>& legal_moves) {
     if (move.first.first > BOARD_H || move.first.second > BOARD_H) {
         return false;
@@ -409,9 +396,7 @@ bool valid_move(Move move, std::vector<Move>& legal_moves) {
     }
     return false;
 }
-
 static const int material_table[7] = {0, 2, 6, 7, 8, 20, 100};
-
 int main(int argc, char** argv) {
     assert(argc == 3);
     std::ofstream log("gamelog.txt");
@@ -465,7 +450,6 @@ int main(int argc, char** argv) {
             total++;
         }
         fin.close();
-
         if (remove(file_action.c_str()) != 0)
             std::cerr << "Error removing file: " << file_action << "\n";
         // Take action
@@ -473,20 +457,13 @@ int main(int argc, char** argv) {
             // If action is invalid.
             data = game.encode_output();
             std::cout << "Invalid Action\n";
-            // std::cout << "depth: " << total << "\n";
-            // std::cout << action.first.second << " " << action.first.first << " → "
-            //           << action.second.second << " " << action.second.first << "\n";
-            // std::cout << x_axis[action.first.second] << y_axis[action.first.first] << " → "
-            //           << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
+            std::cout << x_axis[action.first.second] << y_axis[action.first.first] << " → "
+                      << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
             std::cout << data;
             log << "Invalid Action\n";
-            // log << "depth: " << total << "\n";
-            // log << action.first.second << " " << action.first.first << " → "
-            //     << action.second.second << " " << action.second.first << "\n";
             log << x_axis[action.first.second] << y_axis[action.first.first] << " → "
                 << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
             log << data;
-
             game.player = !game.player;
             game.game_state = GameState::WIN;
             break;
@@ -519,11 +496,11 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-            if (white_material > black_material) {
-                game.player = 0;
-                game.game_state = GameState::WIN;
-            } else if (white_material < black_material) {
+            if (white_material < black_material) {
                 game.player = 1;
+                game.game_state = GameState::WIN;
+            } else if (white_material > black_material) {
+                game.player = 0;
                 game.game_state = GameState::WIN;
             } else {
                 game.game_state = GameState::DRAW;
