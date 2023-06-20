@@ -55,7 +55,7 @@ public:
 
     int evaluate() const;
     int win() const;
-    std::unique_ptr<State> next_state(Move move);
+    std::shared_ptr<State> next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
     std::string encode_state();

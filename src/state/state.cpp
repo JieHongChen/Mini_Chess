@@ -29,7 +29,7 @@ static const int piece_value[7] = {0, 2, 6, 7, 8, 20, 100};
  * @return int 
  */
 int State::evaluate() const {
-    long long value = 0;
+    int value = 0;
 
     for (int i = 0; i < BOARD_H; ++i) {
         for (int j = 0; j < BOARD_W; ++j) {
@@ -38,10 +38,6 @@ int State::evaluate() const {
         }
     }
 
-    // if (value > std::numeric_limits<int>::max())
-    //     value = std::numeric_limits<int>::max();
-    // else if (value < std::numeric_limits<int>::min())
-    //     value = std::numeric_limits<int>::min();
     return value;
 }
 #elif STATE_FUNCTION == 3
@@ -96,9 +92,9 @@ int State::win() const {
  * @brief return next state after move
  * 
  * @param move 
- * @return std::unique_ptr<State> 
+ * @return std::shared_ptr<State> 
  */
-std::unique_ptr<State> State::next_state(Move move) {
+std::shared_ptr<State> State::next_state(Move move) {
     Board next = this->board;
     Point from = move.first, to = move.second;
 
@@ -114,7 +110,7 @@ std::unique_ptr<State> State::next_state(Move move) {
     next.board[this->player][from.first][from.second] = 0;
     next.board[this->player][to.first][to.second] = moved;
 
-    std::unique_ptr<State> next_state = std::make_unique<State>(next, 1 - this->player);
+    std::shared_ptr<State> next_state = std::make_unique<State>(next, 1 - this->player);
 
     if (this->game_state != WIN)
         next_state->get_legal_actions();

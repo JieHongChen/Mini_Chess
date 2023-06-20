@@ -13,7 +13,7 @@
  * @param depth Search depth
  * @return Move
  */
-Move Minimax::get_move(std::unique_ptr<State>& state, int depth) {
+Move Minimax::get_move(std::shared_ptr<State>& state, int depth) {
     Move best_move = {{0, 0}, {0, 0}};
     minimax(state, depth, (state->player ? -1 : 1), true, best_move);
     return best_move;
@@ -29,7 +29,7 @@ Move Minimax::get_move(std::unique_ptr<State>& state, int depth) {
  * @param best_move 
  * @return long long 
  */
-long long Minimax::minimax(std::unique_ptr<State>& state, int depth, int player, bool is_max, Move& best_move) {
+long long Minimax::minimax(std::shared_ptr<State>& state, int depth, int player, bool is_max, Move& best_move) {
     if (depth == 0) {
         return player * state->evaluate();
     }
@@ -38,7 +38,7 @@ long long Minimax::minimax(std::unique_ptr<State>& state, int depth, int player,
     if (is_max) {
         long long value = -INF;
         for (auto action : state->legal_actions) {
-            std::unique_ptr<State> next_state = state->next_state(action);
+            std::shared_ptr<State> next_state = state->next_state(action);
             if (next_state->win() == player) {
                 best_move = action;
                 return INF;
@@ -55,7 +55,7 @@ long long Minimax::minimax(std::unique_ptr<State>& state, int depth, int player,
     } else {
         long long value = INF;
         for (auto action : state->legal_actions) {
-            std::unique_ptr<State> next_state = state->next_state(action);
+            std::shared_ptr<State> next_state = state->next_state(action);
             if (next_state->win() == -player) {
                 best_move = action;
                 return -INF;

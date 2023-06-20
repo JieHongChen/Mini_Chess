@@ -6,7 +6,7 @@
 #include "../config.hpp"
 #include "../state/state.hpp"
 
-std::unique_ptr<State> root;
+std::shared_ptr<State> root;
 
 /**
  * @brief Read the board from the file

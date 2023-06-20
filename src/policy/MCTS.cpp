@@ -1,109 +1,172 @@
 #include "./MCTS.hpp"
 
-#include <cstdlib>
+#include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <limits>
+#include <memory>
+#include <random>
 #include <vector>
+
 #include "../state/state.hpp"
 
-int now_player;
+#define D_MAX std::numeric_limits<double>::max()
+#define D_MIN std::numeric_limits<double>::min()
 
-Move MCTS::get_move(State* state, int limit) {
-    now_player = state->player;
-    Node* root = new Node(state);
-    root->legal_actions.clear();
-    root->get_legal_actions();
-    root->expand();
-    for (int i = 0; i < limit; i++) {
-        Node* node = root;
-        while (node->children.size() > 0) {
-            node->visit_times++;
-            node = node->select();
-        }
-        if(node->visit_times != 0){
-            node->visit_times++;
-            node->expand();
-            node = node->select();
-        }
-        node->visit_times++;
-        node->backpropagate(node->simulation());
-    }
-    std::vector<Move> best_moves;
-    double best_winning_rate = (double)root->children[0]->win_times / root->children[0]->visit_times;
-    best_moves.push_back(root->children[0]->move);
-    for (auto child : root->children) {
-        if (child->visit_times == 0) {
-            continue;
-        }
-        double winning_rate = (double)child->win_times / child->visit_times;
-        if (winning_rate > best_winning_rate) {
-            best_moves.clear();
-            best_winning_rate = winning_rate;
-            best_moves.push_back(child->move);
-        }
-        else if(winning_rate == best_winning_rate){
-            best_moves.push_back(child->move);
-        }
-    }
-    root->delete_children();
-    delete root;
-    return best_moves[rand() % best_moves.size()];
+static std::random_device rd;
+static std::mt19937 gen(rd());
+// static std::mt19937 gen(RANDOM_SEED);
+
+float Q_sqrt(float number) {
+    long i;
+    float x2, y;
+    const float threehalfs = 1.5F;
+
+    x2 = number * 0.5F;
+    y = number;
+    i = *(long*)&y;             // evil floating point bit level hacking
+    i = 0x5f3759df - (i >> 1);  // what the fuck?
+    y = *(float*)&i;
+    y = y * (threehalfs - (x2 * y * y));  // 1st iteration
+    // y = y * (threehalfs - (x2 * y * y));  // 2nd iteration, this can be removed
+    return 1 / y;
 }
 
-bool Node::simulation() {
-    State* state = new State(*this);
-    if(state->legal_actions.empty()) state->get_legal_actions();
-    while (state->game_state == UNKNOWN) {
-        int index = rand() % state->legal_actions.size();
-        State* next_state = state->next_state(state->legal_actions[index]);
-        delete state;
-        state = next_state;
-        if(state->legal_actions.empty()) state->get_legal_actions();
+static const double C = 4;
+
+static std::shared_ptr<Node> root;
+
+#include <fstream>
+std::ofstream tree_log("treelog.txt");
+bool do_tree_log = false;
+
+/**
+ * @brief Get a move from MCTS policy
+ *
+ * @param state Now state
+ * @param depth Search depth
+ * @return Move
+ */
+#include <iostream>
+Move MCTS::get_move(const std::shared_ptr<State>& state, size_t simulation_times) {
+    root = std::make_shared<Node>(state);
+    for (size_t i = 0; i < simulation_times; ++i) {
+        // if (i < 20) {
+        if ((i + 1) % 1000 == 0) {
+            do_tree_log = true;
+            tree_log << root->get_n() << " " << root->get_w() << std::endl;
+            // tree_log << "//////////" << std::endl;
+            // root->printTree();
+        } else
+            do_tree_log = false;
+        Node* cur = root->select();
+        bool simulation_result = cur->rollout();
+        cur->backpropagate(simulation_result);
     }
-    int winner = player;
-    delete state;
-    return winner==now_player;
+    Move best_move = {{0, 0}, {0, 0}};
+    double value = D_MIN;
+    // tree_log << root->get_children().size() << std::endl;
+    for (const Node* node : root->get_children()) {
+        double val = node->ucb();
+        // tree_log << "\t" << val << "\t" << value << std::endl;
+        // tree_log << node->move.first.first << " " << node->move.first.second << " "
+        //           << node->move.second.first << " " << node->move.second.second << std::endl;
+        if (val > value) {
+            val = value;
+            best_move = node->get_move();
+        }
+    }
+    // tree_log << std::endl;
+    // tree_log << best_move.first.first << " " << best_move.first.second << " "
+    //           << best_move.second.first << " " << best_move.second.second << std::endl;
+    return best_move;
 }
 
-void Node::backpropagate(bool win) {
-    Node* node = this;
-    while (node->parent != nullptr) {
-        node->update(win);
-        node = node->parent;
+Node::Node(std::shared_ptr<State> state, Node* parent, Move move, bool opponent)
+    : state(state), parent(parent), move(move), opponent(opponent) {}
+Node::~Node() {
+    for (Node* child : children) {
+        delete child;
     }
 }
 
-void Node::update(bool win) {
-    if(win) this->win_times++;
-    this->ucb = (double)this->win_times / this->visit_times +
-                    sqrt(2 * log(this->parent->visit_times) / this->visit_times);
-    
+double Node::ucb() const {
+    if (n) {
+        // return (opponent ? n - w : w) / n + C * sqrt(log(parent->n) / n);
+        return (opponent ? n - w : w) / n + C * Q_sqrt(log(parent->n) / n);
+    }
+    return D_MAX;
+}
+
+/**
+ * @brief Select a node to rollout
+ *
+ * @return Node*
+ */
+Node* Node::select() {
+    Node* cur = this;
+    while (!cur->children.empty()) {
+        cur = *std::max_element(cur->children.begin(), cur->children.end(),
+                                [](Node* a, Node* b) { return a->ucb() < b->ucb(); });
+    }
+
+    // old node
+    if (cur->n) {
+        cur->expand();
+        return cur->children[0];
+    }
+    // new node
+    return cur;
 }
 
 void Node::expand() {
-    if(!this->legal_actions.size()) 
-        this->get_legal_actions();
-    for (auto move : this->legal_actions) {
-        State* next_state = this->next_state(move);
-        Node* child = new Node(next_state, this, move);
-        delete next_state;
-        this->children.push_back(child);
+    state->get_legal_actions();
+    children.reserve(state->legal_actions.size());
+    for (const Move& move : state->legal_actions) {
+        children.emplace_back(new Node(state->next_state(move), this, move, !opponent));
     }
 }
 
-Node* Node::select() {
-    Node* node = this->children[0];
-    for(auto child = ++this->children.begin(); child != this->children.end(); child++){
-        if((*child)->ucb > node->ucb){
-            node = *child;
+bool Node::rollout() {
+    int root_player = (opponent ? 1 - state->player : state->player);
+    std::shared_ptr<State> cur = state;
+    for (int i = 0; i < 50; ++i) {
+        cur->get_legal_actions();
+        if (cur->legal_actions.empty()) {
+            tree_log << "empty" << std::endl;
+            return cur->player != root_player;
+        }
+        cur = cur->next_state(cur->legal_actions[gen() % cur->legal_actions.size()]);
+        int winner = cur->win();
+        if (winner) {
+            if (do_tree_log) {
+                tree_log << "win" << std::endl;
+            }
+            return (root_player == 0 ? winner > 0 : winner < 0);
         }
     }
-    return node;
+    return (root_player == 0 ? cur->evaluate() > 0 : cur->evaluate() < 0);
 }
 
-void Node::delete_children() {
-    if(this->children.size() == 0) return;
-    for (auto child : this->children) {
-        child->delete_children();
-        delete child;
+void Node::backpropagate(bool win) {
+    ++n;
+    if (win) {
+        ++w;
+    }
+    if (parent) {
+        parent->backpropagate(win);
+    }
+}
+
+void Node::printTree(int depth) {
+    for (int i = 0; i < depth; ++i) {
+        tree_log << " ";
+    }
+    // tree_log << move.first.first << " " << move.first.second << " " << move.second.first << " "
+    //           << move.second.second << " ";
+    tree_log << w << " " << n << std::endl;
+    for (Node* child : children) {
+        if (!child) continue;
+        child->printTree(depth + 1);
     }
 }

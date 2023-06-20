@@ -56,7 +56,7 @@ public:
     State(Board board) : board(board){};
     State(Board board, int player) : board(board), player(player){};
 
-    std::unique_ptr<State> next_state(Move move);
+    std::shared_ptr<State> next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
     std::string encode_state();
@@ -67,7 +67,7 @@ public:
  * @param move
  * @return State*
  */
-std::unique_ptr<State> State::next_state(Move move) {
+std::shared_ptr<State> State::next_state(Move move) {
     Board next = this->board;
     Point from = move.first, to = move.second;
 
@@ -83,7 +83,7 @@ std::unique_ptr<State> State::next_state(Move move) {
     next.board[this->player][from.first][from.second] = 0;
     next.board[this->player][to.first][to.second] = moved;
 
-    std::unique_ptr<State> next_state = std::make_unique<State>(next, 1 - this->player);
+    std::shared_ptr<State> next_state = std::make_unique<State>(next, 1 - this->player);
 
     if (this->game_state != GameState::WIN)
         next_state->get_legal_actions();
@@ -409,7 +409,7 @@ int main(int argc, char** argv) {
 
     State game;
     game.get_legal_actions();
-    std::unique_ptr<State> pTemp;
+    std::shared_ptr<State> pTemp;
     // State* temp = nullptr;
     std::string data;
     int step = 1;

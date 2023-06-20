@@ -1,30 +1,45 @@
 #pragma once
+
 #include <vector>
 
 #include "../state/state.hpp"
+
+class Node {
+private:
+    std::shared_ptr<State> state;
+    Node* const parent;
+    const Move move;
+    const bool opponent;
+    std::vector<Node*> children;
+    int w = 0;
+    int n = 0;
+    // double ucb = 1e9;
+
+public:
+    Node(std::shared_ptr<State> state, Node* parent = nullptr, Move move = Move(), bool opponent = false);
+    ~Node();
+
+    const std::vector<Node*> get_children() const { return children; }
+    Move get_move() const { return move; }
+    int get_n() const { return n; }
+    int get_w() const { return w; }
+
+    double ucb() const ;
+    Node* select();
+    void expand();
+    bool rollout();
+    void backpropagate(bool win);
+    void printTree(int depth = 0);
+};
+
 /**
- * @brief Policy class for random policy,
+ * @brief Policy class for Monte Carlo tree search policy,
  * your policy class should have get_move method
  */
 class MCTS {
-   public:
-    static Move get_move(State* state, int limit);
+public:
+    static Move get_move(const std::shared_ptr<State>& state, size_t simulation_times);
 };
 
-class Node : public State {
-   public:
-    Node* parent = nullptr;
-    std::vector<Node*> children;
-    int visit_times = 0;
-    int win_times = 0;
-    double ucb = 1e9;
-    bool simulation();
-    Move move;
-    Node(State* state, Node* parent = nullptr, Move move = Move())
-        : State(*state), parent(parent), move(move){};
-    void expand();
-    Node* select();
-    void backpropagate(bool win);
-    void update(bool win);
-    void delete_children();
-};
+// std::shared_ptr<Node> MCTS::root;
+

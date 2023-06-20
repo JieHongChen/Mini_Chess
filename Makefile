@@ -18,7 +18,7 @@ TARGET_PLAYER 	= $(PLAYERS:$(SOURCES_DIR)/player/%.cpp=%)
 TARGET_MAIN 	= main
 TARGET_OTHER 	= selfplay benchmark
 TARGET_UNITTEST = $(UNITTESTS:$(UNITTEST_DIR)/%.cpp=%)
-OTHER 			= action state gamelog.txt
+OTHER 			= action state gamelog.txt treelog.txt
 
 
 .PHONY: all clean
