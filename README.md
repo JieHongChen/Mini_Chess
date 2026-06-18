@@ -160,14 +160,8 @@ Game parameters can be configured in `src/config.hpp`:
 - `gamelog.txt`: Detailed log of the entire game including all moves and board states
 - Command-line output showing game progression
 
-## License
-
-This project is provided as-is for educational and research purposes.
-
 ## Author
 
 Created by JieHongChen
 
 ---
-
-**Note**: This is a game engine for testing AI algorithms. The actual game rules and board representation follow a specific variant of chess implemented in the `state.hpp` module.
