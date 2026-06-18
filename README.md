@@ -14,7 +14,6 @@ Mini Chess is a game engine designed to simulate and test various artificial int
   - **Minimax**: Classic minimax algorithm for game tree search
   - **Negamax**: Negamax algorithm variant of minimax
   - **Alpha-Beta Pruning**: Optimized minimax with alpha-beta pruning
-  - **Monte Carlo Tree Search (MCTS)**: Statistical tree search algorithm
   - **Submission Strategy**: Custom submission implementation with alpha-beta pruning and negamax
 
 - **Game Simulation**: Framework to run matches between different AI players with logging and move validation
